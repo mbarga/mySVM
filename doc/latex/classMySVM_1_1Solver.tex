@@ -1,0 +1,113 @@
+\hypertarget{classMySVM_1_1Solver}{
+\section{MySVM::Solver Class Reference}
+\label{classMySVM_1_1Solver}\index{MySVM::Solver@{MySVM::Solver}}
+}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{classMySVM_1_1Solver_ac0cd4065504fa00e8ee855213d3b6b2c}{examine} (int index)
+\begin{DoxyCompactList}\small\item\em 'ExamineExample' Checks if SVM structure satisfies KKT conditions If for a given index the conditions are not met, calls \hyperlink{classMySVM_1_1Solver_a82517a56e857e500a351baa9ac2909d0}{update()} to optimize for current alpha pair \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classMySVM_1_1Solver_a699b9aeb1aa2f5dafda0944409adb68e}{
+double {\bfseries alpha} \mbox{[}N\mbox{]}}
+\label{classMySVM_1_1Solver_a699b9aeb1aa2f5dafda0944409adb68e}
+
+\end{DoxyCompactItemize}
+\subsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{classMySVM_1_1Solver_a82517a56e857e500a351baa9ac2909d0}{update} (int index\_\-i, int index\_\-j)
+\begin{DoxyCompactList}\small\item\em 'TakeStep' Optimize the SVM for a pair of alphas \end{DoxyCompactList}\item 
+double \hyperlink{classMySVM_1_1Solver_a8930f71f39a1c36b99c7b0ac33c3f23c}{kernel} (double $\ast$, double $\ast$)
+\begin{DoxyCompactList}\small\item\em Evaluates the kernel function on two inputs. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classMySVM_1_1Solver_a95a02742438396121ae99afaf5c98818}{
+double {\bfseries y} \mbox{[}N\mbox{]}}
+\label{classMySVM_1_1Solver_a95a02742438396121ae99afaf5c98818}
+
+\item 
+\hypertarget{classMySVM_1_1Solver_a77977ce80074a161b26f517d4e6a012b}{
+double {\bfseries x} \mbox{[}N\mbox{]}\mbox{[}M\mbox{]}}
+\label{classMySVM_1_1Solver_a77977ce80074a161b26f517d4e6a012b}
+
+\item 
+\hypertarget{classMySVM_1_1Solver_a12e33bdcc6f789f628cb045c8efbb17b}{
+double {\bfseries b} \mbox{[}N\mbox{]}}
+\label{classMySVM_1_1Solver_a12e33bdcc6f789f628cb045c8efbb17b}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classMySVM_1_1Solver_ac0cd4065504fa00e8ee855213d3b6b2c}{
+\index{MySVM::Solver@{MySVM::Solver}!examine@{examine}}
+\index{examine@{examine}!MySVM::Solver@{MySVM::Solver}}
+\subsubsection[{examine}]{\setlength{\rightskip}{0pt plus 5cm}int MySVM::Solver::examine (
+\begin{DoxyParamCaption}
+\item[{int}]{index}
+\end{DoxyParamCaption}
+)}}
+\label{classMySVM_1_1Solver_ac0cd4065504fa00e8ee855213d3b6b2c}
+
+
+'ExamineExample' Checks if SVM structure satisfies KKT conditions If for a given index the conditions are not met, calls \hyperlink{classMySVM_1_1Solver_a82517a56e857e500a351baa9ac2909d0}{update()} to optimize for current alpha pair 
+
+
+\begin{DoxyParams}{Parameters}
+{\em index} & index to check \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Returns '1' if anything was updated 
+\end{DoxyReturn}
+\hypertarget{classMySVM_1_1Solver_a8930f71f39a1c36b99c7b0ac33c3f23c}{
+\index{MySVM::Solver@{MySVM::Solver}!kernel@{kernel}}
+\index{kernel@{kernel}!MySVM::Solver@{MySVM::Solver}}
+\subsubsection[{kernel}]{\setlength{\rightskip}{0pt plus 5cm}double MySVM::Solver::kernel (
+\begin{DoxyParamCaption}
+\item[{double $\ast$}]{x1, }
+\item[{double $\ast$}]{x2}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily  \mbox{[}private\mbox{]}}}}
+\label{classMySVM_1_1Solver_a8930f71f39a1c36b99c7b0ac33c3f23c}
+
+
+Evaluates the kernel function on two inputs. 
+
+\begin{DoxyReturn}{Returns}
+Evaluated dot product 
+\end{DoxyReturn}
+\hypertarget{classMySVM_1_1Solver_a82517a56e857e500a351baa9ac2909d0}{
+\index{MySVM::Solver@{MySVM::Solver}!update@{update}}
+\index{update@{update}!MySVM::Solver@{MySVM::Solver}}
+\subsubsection[{update}]{\setlength{\rightskip}{0pt plus 5cm}int MySVM::Solver::update (
+\begin{DoxyParamCaption}
+\item[{int}]{index\_\-i, }
+\item[{int}]{index\_\-j}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily  \mbox{[}private\mbox{]}}}}
+\label{classMySVM_1_1Solver_a82517a56e857e500a351baa9ac2909d0}
+
+
+'TakeStep' Optimize the SVM for a pair of alphas 
+
+
+\begin{DoxyParams}{Parameters}
+{\em index\_\-i} & index of first alpha of the pair being analyzed \\
+\hline
+{\em index\_\-j} & index of second alpha of the pair being analyzed \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+An integer indicating whether anything was updated ('0' if result was within the error threshold, i.e. nothing changed) 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files:\begin{DoxyCompactItemize}
+\item 
+/home/mbarga/Workspace/mySVM/include/solver.h\item 
+/home/mbarga/Workspace/mySVM/src/solver.cpp\end{DoxyCompactItemize}
