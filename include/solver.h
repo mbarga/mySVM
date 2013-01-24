@@ -18,11 +18,9 @@ namespace MySVM {
 
 class Solver {
 private:
-
 	// all these arrays need to know the size in order to run w/o seg fault
 	double y[N];
 	double x[N][M]; // training examples (and their associated features)
-	double b[N];
 
 	/** \brief 'TakeStep' Optimize the SVM for a pair of alphas
 	 * 	\param index_i index of first alpha of the pair being analyzed
@@ -38,6 +36,8 @@ private:
 
 public:
 	double alpha[N];
+	double w[M];
+	double b;
 
 	/** \brief 'ExamineExample' Checks if SVM structure satisfies KKT conditions; If for a given index the conditions are not met, calls update() to optimize for current alpha pair
 	 * 	\param index index to check

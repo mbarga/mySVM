@@ -13,15 +13,18 @@ Solver::Solver() {
 
 	for (int example_i = 0; example_i < N; example_i++) {
 		// private
-		y[example_i] = rand() % RAND_MAX;	//TODO randomize y's for simplicity now
-		b[example_i] = 1; 					// can b's be initialized to '1'?
+		//TODO randomize y's for simplicity now
+		y[example_i] = rand() % RAND_MAX;
 		for (int feature_i = 0; feature_i < M; feature_i++) {
 			x[example_i][feature_i] = rand() % 100;
+			w[feature_i] = 0;
 		}
 
 		//public
-		alpha[example_i] = 1;
+		alpha[example_i] = 0;
 	}
+
+	b = 0;
 }
 
 double Solver::kernel(double *x1, double *x2) {
@@ -62,6 +65,7 @@ int Solver::examine(int index_j) {
 			}
 		}
 
+		// lookat tinySVM
 		/*
 		 if ( numAlphaNotAtBounds > 1 ) {
 		 // perform second choise heuristic to choose index_i
@@ -145,8 +149,8 @@ int Solver::update(int index_i, int index_j) {
 
 	} else {
 		//TODO: calculate these objectives
-		double Lobj = 0; //objective fctn at a2 = L;
-		double Hobj = 0; //objective fctn at a2 = H;
+		double Lobj = (y2 * L * x[]) - b; //objective function at a2 = L;
+		double Hobj = (y2 * H * x[]) - b; //objective function at a2 = H;
 
 		if (Lobj < (Hobj - EPS)) {
 			a2 = L;
@@ -163,17 +167,24 @@ int Solver::update(int index_i, int index_j) {
 
 	a1 = alph1 + s * (alph2 - a2);
 
-	//TODO: update threshold to reflect change in lagrange mults
+	// update bias (threshold) to reflect change in alphas
 	// 2.3 Computing the Threshold
-	//	double b1 = E1 + y1*((a1 - alph1) * k11) + y2*((a2 - alph2) * k12) + b;
-	//	double b2 = E2 + y1*((a1 - alph1) * k12) + y2*((a2 - alph2) * k22) + b;
+	double b1 = E1 + y1*((a1 - alph1) * k11) + y2*((a2 - alph2) * k12) + b;
+	double b2 = E2 + y1*((a1 - alph1) * k12) + y2*((a2 - alph2) * k22) + b;
+	if (((a1 == H) | (a1 == L)) & ((a2 == H) | (a2 == L))) { // could this be simplified?
+		b = (b1 + b2) / 2;
+	} else {
+		// alphas not at bounds: b1 should be equal to b2
+		b = b1;
+	}
 
-	//TODO: update weight vector to reflect change in a1 & a2
+	// update weight vector
 	// 2.4 An Optimization for Linear SVMs
-	//	double wnew = w + y1*(a1 - alph1)*x1 + y2*(a2 - alph2)*x2;
+	for (int findex = 0; findex < M; findex++) {
+		w[findex] = w[findex] + y1*(a1 - alph1)*x[index_i][findex] + y2*(a2 - alph2)*x[index_j][findex];
+	}
 
 	//TODO: update error cache using new lagrange mults
-
 
 	// update the alpha array with the new values
 	alpha[index_i] = a1;
