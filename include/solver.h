@@ -45,6 +45,11 @@ public:
 	 */
 	int examine(int index);
 
+	//NOTE: MAINTAIN A CACHED ERROR VALUE E = u_i - y_i FOR EVERY NON-BOUND ENTRY IN THE TRAINING SET
+	// Typedef our template for easy of readability and use.
+	typedef LRUCache<int, double> double_cache_t;
+	double_cache_t *cache;
+
 	Solver();
 
 };// end Solver

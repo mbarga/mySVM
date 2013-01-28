@@ -25,6 +25,18 @@ Solver::Solver() {
 	}
 
 	b = 0;
+
+	// Instantiate a string cache with at most (x) elements.
+	*cache = new double_cache_t(N/2);
+
+	/*********** TEST IMPL OF CACHE ***********************/
+//	// Insert data into the cache.
+//	std::string quote_1 = "Number is the within of all things. -Pythagoras";
+//	cache->insert(4, quote_1);
+//
+//	// Fetch it out.
+//	std::clog << cache->fetch(4) << std::endl;
+	/*******************************************************/
 }
 
 double Solver::kernel(double *x1, double *x2) {
@@ -109,25 +121,25 @@ int Solver::update(int index_i, int index_j) {
 
 	double y1 = y[index_i];
 	double y2 = y[index_j];
-	double alph1 = alpha[index_i];
-	double alph2 = alpha[index_j];
-	double E1 = 1; // svm output[i] - y1
-	double s = y1 * y2;
-	double a1 = 0;
-	double a2 = 0;
+	double s = y1*y2;
 
-	// TODO: fix
-	double E2 = 0;
+	double alpha1old = alpha[index_i];
+	double alpha2old = alpha[index_j];
+	double alpha1updated = 0;
+	double alpha2updated = 0;
+
+	double E2 = cache->fetch(index_j);
+	double E1 = cache->fetch(index_i);
 
 	// compute L and H via equations
 	double H = 0;
 	double L = 0;
 	if (s < 0) {
-		L = getMax(0, (alph2-alph1));
-		H = getMin(C, (C+alph2-alph1));
+		L = getMax(0, (alpha2old-alpha1old));
+		H = getMin(C, (C+alpha2old-alpha1old));
 	} else {
-		L = getMax(0, (alph2+alph1-C));
-		H = getMin(C, (alph2+alph1));
+		L = getMax(0, (alpha2old+alpha1old-C));
+		H = getMin(C, (alpha2old+alpha1old));
 	}
 
 	if (L == H) {
@@ -140,38 +152,51 @@ int Solver::update(int index_i, int index_j) {
 	double eta = k11 + k22 - (2 * k12);
 
 	if (eta > 0) {
-		a2 = alph2 + (y2 * (E1 - E2) / eta);
-		if (a2 < L) {
-			a2 = L;
-		} else if (a2 > H) {
-			a2 = H;
+		alpha2updated = alpha2old + (y2 * (E1-E2) / eta);
+		if (alpha2updated < L) {
+			alpha2updated = L;
+		} else if (alpha2updated > H) {
+			alpha2updated = H;
 		}
 
 	} else {
-		//TODO: calculate these objectives
-		double Lobj = (y2 * L * x[]) - b; //objective function at a2 = L;
-		double Hobj = (y2 * H * x[]) - b; //objective function at a2 = H;
+		// calculate these objectives
+		double aa2 = L;
+		double aa1 = alpha1old + s * (alpha2old-aa2);
+		double Lobj = aa1 + aa2; // + (y2 * L * x[]) - b: objective function at a2 = L;
+		for (int elementIndex = 0; elementIndex < N; elementIndex++) {
+			Lobj += ((-y1*aa1/2) * y[elementIndex] * kernel(x[elementIndex], x[index_i])) +
+					((-y2*aa2/2) * y[elementIndex] * kernel(x[elementIndex], x[index_j]));
+		}
+
+		aa2 = H;
+		aa1 = alpha1old + s * (alpha2old-aa2);
+		double Hobj = aa1 + aa2; // + (y2 * H * x[]) - b: objective function at a2 = H;
+		for (int elementIndex = 0; elementIndex < N; elementIndex++) {
+			Hobj += ((-y1*aa1/2) * y[elementIndex] * kernel(x[elementIndex], x[index_i])) +
+					((-y2*aa2/2) * y[elementIndex] * kernel(x[elementIndex], x[index_j]));
+		}
 
 		if (Lobj < (Hobj - EPS)) {
-			a2 = L;
+			alpha2updated = L;
 		} else if (Lobj > (Hobj + EPS)) {
-			a2 = H;
+			alpha2updated = H;
 		} else {
-			a2 = alph2;
+			alpha2updated = alpha2old;
 		}
 	}
 
-	if (abs(a2 - alph2) < EPS * (a2 + alph2 + EPS)) {
+	if (abs(alpha2updated-alpha2old) < EPS*(alpha2updated + alpha2old + EPS)) {
 		return 0;
 	}
 
-	a1 = alph1 + s * (alph2 - a2);
+	alpha1updated = alpha1old + s*(alpha2old-alpha2updated);
 
 	// update bias (threshold) to reflect change in alphas
 	// 2.3 Computing the Threshold
-	double b1 = E1 + y1*((a1 - alph1) * k11) + y2*((a2 - alph2) * k12) + b;
-	double b2 = E2 + y1*((a1 - alph1) * k12) + y2*((a2 - alph2) * k22) + b;
-	if (((a1 == H) | (a1 == L)) & ((a2 == H) | (a2 == L))) { // could this be simplified?
+	double b1 = E1 + y1*((alpha1updated - alpha1old) * k11) + y2*((alpha2updated - alpha2old) * k12) + b;
+	double b2 = E2 + y1*((alpha1updated - alpha1old) * k12) + y2*((alpha2updated - alpha2old) * k22) + b;
+	if (((alpha1updated == H) | (alpha1updated == L)) & ((alpha2updated == H) | (alpha2updated == L))) { // could this be simplified?
 		b = (b1 + b2) / 2;
 	} else {
 		// alphas not at bounds: b1 should be equal to b2
@@ -181,14 +206,18 @@ int Solver::update(int index_i, int index_j) {
 	// update weight vector
 	// 2.4 An Optimization for Linear SVMs
 	for (int findex = 0; findex < M; findex++) {
-		w[findex] = w[findex] + y1*(a1 - alph1)*x[index_i][findex] + y2*(a2 - alph2)*x[index_j][findex];
+		w[findex] = w[findex] + y1*(alpha1updated - alpha1old)*x[index_i][findex] + y2*(alpha2updated - alpha2old)*x[index_j][findex];
 	}
 
 	//TODO: update error cache using new lagrange mults
+	//SMO.error = SMO.error + w1*K(:,i1) + w2*K(:,i2) + bold - SMO.bias; // NEED TO UPDATE EVERY ENTRY INPLACE
+	// SMO.error(i1) = 0.0; SMO.error(i2) = 0.0;
+	cache->insert(index_i, 0.0);
+	cache->insert(index_j, 0.0);
 
 	// update the alpha array with the new values
-	alpha[index_i] = a1;
-	alpha[index_j] = a2;
+	alpha[index_i] = alpha1updated;
+	alpha[index_j] = alpha2updated;
 
 	return 1;
 }// solver::update

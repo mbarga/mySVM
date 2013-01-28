@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept> 	// std::runtime_error
+#include <string.h>
 namespace MySVM {
 // NOTE: The file writer implements a C++ idiom, "RAII" for encapsulated resource management
 
