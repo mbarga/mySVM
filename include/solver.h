@@ -38,6 +38,7 @@ public:
 	double alpha[N];
 	double w[M];
 	double b;
+	double error[N];
 
 	/** \brief 'ExamineExample' Checks if SVM structure satisfies KKT conditions; If for a given index the conditions are not met, calls update() to optimize for current alpha pair
 	 * 	\param index index to check
@@ -47,8 +48,8 @@ public:
 
 	//NOTE: MAINTAIN A CACHED ERROR VALUE E = u_i - y_i FOR EVERY NON-BOUND ENTRY IN THE TRAINING SET
 	// Typedef our template for easy of readability and use.
-	typedef LRUCache<int, double> double_cache_t;
-	double_cache_t *cache;
+	//typedef LRUCache<int, double> double_cache_t;
+	//double_cache_t *cache;
 
 	Solver();
 

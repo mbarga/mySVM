@@ -17,17 +17,19 @@ Solver::Solver() {
 		y[example_i] = rand() % RAND_MAX;
 		for (int feature_i = 0; feature_i < M; feature_i++) {
 			x[example_i][feature_i] = rand() % 100;
-			w[feature_i] = 0;
 		}
 
 		//public
 		alpha[example_i] = 0;
+		error[example_i] = -y[example_i]; // init error to opposite signed y (other side of the separating margin)
 	}
 
+	for (int i=0; i<M; i++) {w[i]=0;}
 	b = 0;
 
-	// Instantiate a string cache with at most (x) elements.
-	*cache = new double_cache_t(N/2);
+	// instantiate a cache with at most (x) elements.
+	//TODO: is this RIGHT?
+	//this->cache = new double_cache_t(N);
 
 	/*********** TEST IMPL OF CACHE ***********************/
 //	// Insert data into the cache.
@@ -55,59 +57,62 @@ int Solver::examine(int index_j) {
 
 	double y2 = y[index_j];
 	double alph2 = alpha[index_j];
-	double E2 = 1; // svm output[i2] - y2
+	double E2 = error[index_j];
 	double r2 = E2 * y2;
-	int numAlphaNotAtBounds = 0;
-	int nonBoundValueAlphaIndices[N] = { 0 };
+	std::vector<int> nonBoundAlphaIdx;
 
 	// TEST
 	printf("EXAMINING\n");
 
 	int index_i = 0;
-	if (((r2 < -EPS) && (alph2 < C)) || ((r2 > EPS) && (alph2 > 0))) {
+	std::vector<int>::iterator iter;
 
+	if (((r2 < -EPS) && (alph2 < C)) || ((r2 > EPS) && (alph2 > 0))) {
 		// find number and indices of non-zero and non-C alphas
 		for (index_i = 0; index_i < N; index_i++) {
-			if ((abs(alpha[index_i]) > EPS)
-					&& ((abs(alpha[index_i] < (C - EPS))) || (abs(
-							alpha[index_i]) > (C + EPS)))) {
-				//TODO: grow this array dynamically
-				nonBoundValueAlphaIndices[numAlphaNotAtBounds] = alpha[index_i];
-				numAlphaNotAtBounds++;
+			if (alpha[index_i] < 0) {
+				std::clog << "alpha returned was < 0" << std::endl;
+			}
+			if ( (alpha[index_i] > EPS) &&
+				((alpha[index_i] < (C - EPS)) || (alpha[index_i] > (C + EPS)))) {
+				// push non-bound alpha index into vector cache
+				nonBoundAlphaIdx.push_back(index_i);
 			}
 		}
 
-		// lookat tinySVM
-		/*
-		 if ( numAlphaNotAtBounds > 1 ) {
-		 // perform second choise heuristic to choose index_i
-		 index_i = 0; // TODO: choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
-		 if ( update(index_i, index_j) ) {
-		 return 1;
-		 }
-		 }
-		 */
+		if (nonBoundAlphaIdx.size() > 1) {
+			// perform second choice heuristic to choose index_i
+			index_i = 0;
+			// choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
+			double errortemp = 0;
+			for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter) {
+			    if (abs(error[*iter] - E2) > errortemp) {
+			    	index_i = *iter;
+			    }
+			    errortemp = abs(error[*iter] - E2);
+			}
+			//TODO: if () the errortemp doesnt stay 0?
+			if (update(index_i, index_j)) {
+				return 1;
+			}
+		}
 
-		/*
-		 // else loop over all non-zero and non-c alpha, starting at a random point
-		 // TODO: start at random point
-		 for(int currentAlphaIndex = 0; currentAlphaIndex < numAlphaNotAtBounds; currentAlphaIndex++) {
-		 index_i = nonBoundValueAlphaIndices[currentAlphaIndex];
-		 if ( update(index_i, index_j) ) {
-		 return 1;
-		 }
-		 }
-		 */
+		// else loop over all non-zero and non-c alpha, starting at a random point
+		//TODO: start at random point
+		for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter) {
+			index_i = *iter;
+			if (update(index_i, index_j)) {
+				return 1;
+			}
+		}
 
-		/*
-		 // else loop over all possible i1, starting at random point
-		 // TODO: start at random point
-		 for(index_i = 0; index_i < N; index_i++) {
-		 if ( update(index_i, index_j) ) {
-		 return 1;
-		 }
-		 }
-		 */
+		// else loop over all possible i1, starting at random point
+		//TODO: start at random point
+		for (index_i = 0; index_i < N; index_i++) {
+			if (update(index_i, index_j)) {
+				return 1;
+			}
+		}
 	}// if error > tolerance
 
 	return 0; // no changes made
@@ -128,8 +133,8 @@ int Solver::update(int index_i, int index_j) {
 	double alpha1updated = 0;
 	double alpha2updated = 0;
 
-	double E2 = cache->fetch(index_j);
-	double E1 = cache->fetch(index_i);
+	double E2 = error[index_j];
+	double E1 = error[index_i];
 
 	// compute L and H via equations
 	double H = 0;
@@ -209,11 +214,13 @@ int Solver::update(int index_i, int index_j) {
 		w[findex] = w[findex] + y1*(alpha1updated - alpha1old)*x[index_i][findex] + y2*(alpha2updated - alpha2old)*x[index_j][findex];
 	}
 
-	//TODO: update error cache using new lagrange mults
-	//SMO.error = SMO.error + w1*K(:,i1) + w2*K(:,i2) + bold - SMO.bias; // NEED TO UPDATE EVERY ENTRY INPLACE
-	// SMO.error(i1) = 0.0; SMO.error(i2) = 0.0;
-	cache->insert(index_i, 0.0);
-	cache->insert(index_j, 0.0);
+	// update error cache using new lagrange mults
+	//TODO: should this be b_old?
+	for (int i; i<N; i++) {
+		error[i] += y1*(alpha1updated-alpha1old)*kernel(x[i], x[index_i]) + y2*(alpha2updated-alpha2old)*kernel(x[i], x[index_j]) + b;
+	}
+	error[index_i] = 0.0;
+	error[index_j] = 0.0;
 
 	// update the alpha array with the new values
 	alpha[index_i] = alpha1updated;
