@@ -8,38 +8,14 @@ namespace MySVM {
 
 // Solver class constructor
 Solver::Solver() {
-
-	srand(time(NULL));
-
 	for (int example_i = 0; example_i < N; example_i++) {
-		// private
-		//TODO randomize y's for simplicity now
-		//y[example_i] = rand() % RAND_MAX;
-		//for (int feature_i = 0; feature_i < M; feature_i++) {
-		//	x[example_i][feature_i] = rand() % 100;
-		//}
-
-		//public
 		alpha[example_i] = 0;
-		//TODO: calculate
-		//error[example_i] = -y[example_i]; // init error to opposite signed y (other side of the separating margin)
+		//TODO: calculate (or separate complete error calculation out to a method)
+		error[example_i] = 10; //-y[example_i]; // init error to opposite signed y (other side of the separating margin)
 	}
 
 	for (int i=0; i<M; i++) {w[i]=0;}
 	b = 0;
-
-	// instantiate a cache with at most (x) elements.
-	//TODO: is this RIGHT?
-	//this->cache = new double_cache_t(N);
-
-	/*********** TEST IMPL OF CACHE ***********************/
-//	// Insert data into the cache.
-//	std::string quote_1 = "Number is the within of all things. -Pythagoras";
-//	cache->insert(4, quote_1);
-//
-//	// Fetch it out.
-//	std::clog << cache->fetch(4) << std::endl;
-	/*******************************************************/
 }
 
 double Solver::kernel(double *x1, double *x2) {
@@ -50,7 +26,8 @@ double Solver::kernel(double *x1, double *x2) {
 		dotProduct += (x1[i] * x2[i]);
 	}
 
-	printf("Value of the linear kernel was: %d\n", dotProduct);
+	//printf("Value of the linear kernel was: %d\n", dotProduct);
+	std::clog << "Value of the linear kernel was: " << dotProduct << "\n"<< std::endl;
 	return dotProduct;
 }
 

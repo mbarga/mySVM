@@ -51,6 +51,10 @@ int main(int argc, char **argv) {
 	char input_file_name[1024] = "/home/mbarga/Workbench/git/mySVM/src/test.input";
 	int status = read_problem(input_file_name);
 
+	if (status != 0) {
+		std::clog << "failed to properly read in input, aborting" << std::endl;
+		return 1;
+	}
 	//TODO: clean up the info that was read in
 	for (int i = 0; i < 10; i++) {
 		std::clog << solver.y[i] << std::endl;
