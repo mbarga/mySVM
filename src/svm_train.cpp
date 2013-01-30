@@ -40,6 +40,8 @@ int main(int argc, char **argv) {
 	int numChanged = 0;
 	bool examineAll = true;
 
+	// TODO: remove test comment
+
 	// instantiate logging
 	std::clog.rdbuf(new Log("mysvm_log", LOG_LOCAL0));
 
