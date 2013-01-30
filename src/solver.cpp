@@ -14,14 +14,15 @@ Solver::Solver() {
 	for (int example_i = 0; example_i < N; example_i++) {
 		// private
 		//TODO randomize y's for simplicity now
-		y[example_i] = rand() % RAND_MAX;
-		for (int feature_i = 0; feature_i < M; feature_i++) {
-			x[example_i][feature_i] = rand() % 100;
-		}
+		//y[example_i] = rand() % RAND_MAX;
+		//for (int feature_i = 0; feature_i < M; feature_i++) {
+		//	x[example_i][feature_i] = rand() % 100;
+		//}
 
 		//public
 		alpha[example_i] = 0;
-		error[example_i] = -y[example_i]; // init error to opposite signed y (other side of the separating margin)
+		//TODO: calculate
+		//error[example_i] = -y[example_i]; // init error to opposite signed y (other side of the separating margin)
 	}
 
 	for (int i=0; i<M; i++) {w[i]=0;}

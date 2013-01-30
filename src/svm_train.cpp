@@ -1,12 +1,13 @@
 #include "mysvm.h"
 #include "solver.h"
 #include "log.h"
+#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 // NOTICE: dont include name space in main()
 
 static char *line = NULL;
 static int max_line_len;
-
+int read_problem(const char *filename);
 static char* readline(FILE *input)
 {
 	int len;
@@ -25,6 +26,9 @@ static char* readline(FILE *input)
 	return line;
 }
 
+MySVM::Solver solver;
+double* x_space;
+
 /**
  *	This is the main entry point for the svm training algorithm. Implements Platt's SMO for C-SVM
  * 
@@ -36,20 +40,21 @@ int main(int argc, char **argv) {
 	int numChanged = 0;
 	bool examineAll = true;
 
-	char input_file_name[1024];
-
-	// get the data from file
-	// int status = read_problem(input_file_name);
-
 	// instantiate logging
-	std::clog.rdbuf(new Log("foo", LOG_LOCAL0));
+	std::clog.rdbuf(new Log("mysvm_log", LOG_LOCAL0));
 
 	/*********** TEST IMPL OF LOG ***********************/
-	std::clog << kLogNotice << "test log message" << std::endl;
+	std::clog << kLogNotice << "Log initialized..." << std::endl;
 	std::clog << "the default is debug level" << std::endl;
 	/*******************************************************/
 
-	MySVM::Solver solver;
+	char input_file_name[1024] = "/home/mbarga/Workbench/git/mySVM/src/test.input";
+	int status = read_problem(input_file_name);
+
+	//TODO: clean up the info that was read in
+	for (int i = 0; i < 10; i++) {
+		std::clog << solver.y[i] << std::endl;
+	}
 
 	while ((numChanged > 0) || (examineAll)) {
 
@@ -88,7 +93,6 @@ int main(int argc, char **argv) {
 	// b = bias
 	return 0;
 
-	//inserting a comment to change later
 } // main
 
 // read in a problem (in svmlight format)
@@ -98,17 +102,16 @@ int read_problem(const char *filename)
 	FILE *fp = fopen(filename,"r");
 	char *endptr;
 	char *idx, *val, *label;
+	int length = 0;
 
-	if(fp == NULL)
-	{
+	if(fp == NULL) {
 		fprintf(stderr,"can't open input file %s\n",filename);
 		exit(1);
 	}
 
 	max_line_len = 1024;
 	line = Malloc(char,max_line_len);
-	while(readline(fp)!=NULL)
-	{
+	while(readline(fp)!=NULL) {
 		char *p = strtok(line," \t"); // label
 
 		// features
@@ -120,26 +123,26 @@ int read_problem(const char *filename)
 			++elements;
 		}
 		++elements;
-		++prob.l;
+		++length;
 	}
 	rewind(fp);
 
-	prob.y = Malloc(double,N);
-	prob.x = Malloc(struct svm_node *,N);
-	x_space = Malloc(struct svm_node,elements);
+	solver.y = Malloc(double, length);
+	solver.x = Malloc(double *, length);
+	x_space = Malloc(double, elements);
 
 	max_index = 0;
 	j=0;
-	for(i=0;i<prob.l;i++)
+	for(i=0; i<length; i++)
 	{
 		inst_max_index = -1; // strtol gives 0 if wrong format, and precomputed kernel has <index> start from 0
 		readline(fp);
-		prob.x[i] = &x_space[j];
+		solver.x[i] = &x_space[j];
 		label = strtok(line," \t\n");
 		if(label == NULL) // empty line
 			return 1;
 
-		prob.y[i] = strtod(label,&endptr);
+		solver.y[i] = strtod(label,&endptr);
 		if(endptr == label || *endptr != '\0')
 			return 1;
 
@@ -151,16 +154,14 @@ int read_problem(const char *filename)
 			if(val == NULL)
 				break;
 
-			errno = 0;
-			x_space[j].index = (int) strtol(idx,&endptr,10);
-			if(endptr == idx || errno != 0 || *endptr != '\0' || x_space[j].index <= inst_max_index)
+			//x_space[j].index = (int) strtol(idx,&endptr,10);
+			if(endptr == idx || *endptr != '\0' ) //|| x_space[j].index <= inst_max_index)
 				return 1;
 			else
-				inst_max_index = x_space[j].index;
+				inst_max_index = (int) strtol(idx,&endptr,10); //x_space[j].index;
 
-			errno = 0;
-			x_space[j].value = strtod(val,&endptr);
-			if(endptr == val || errno != 0 || (*endptr != '\0' && !isspace(*endptr)))
+			x_space[j] = strtod(val,&endptr);
+			if(endptr == val || (*endptr != '\0' && !isspace(*endptr)))
 				return 1;
 
 			++j;
@@ -168,7 +169,7 @@ int read_problem(const char *filename)
 
 		if(inst_max_index > max_index)
 			max_index = inst_max_index;
-		x_space[j++].index = -1;
+		//x_space[j++].index = -1;
 	}
 
 	fclose(fp);

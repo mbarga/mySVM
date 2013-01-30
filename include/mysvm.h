@@ -13,6 +13,7 @@
 namespace MySVM {
 // NOTE: The file writer implements a C++ idiom, "RAII" for encapsulated resource management
 
+// file writer function
 class file {
 public:
 	file(const char* filename) :

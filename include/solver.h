@@ -18,10 +18,6 @@ namespace MySVM {
 
 class Solver {
 private:
-	// all these arrays need to know the size in order to run w/o seg fault
-	double y[N];
-	double x[N][M]; // training examples (and their associated features)
-
 	/** \brief 'TakeStep' Optimize the SVM for a pair of alphas
 	 * 	\param index_i index of first alpha of the pair being analyzed
 	 * 	\param index_j index of second alpha of the pair being analyzed
@@ -35,6 +31,9 @@ private:
 	double kernel(double *, double *);
 
 public:
+	// all these arrays need to know the size in order to run w/o seg fault
+	double *y;//[N];
+	double **x;//[N][M]; // training examples (and their associated features)
 	double alpha[N];
 	double w[M];
 	double b;
