@@ -10,10 +10,10 @@
 #include <time.h>
 #include <cache.h>
 
-#define C 0.2			// TODO: slack?
+#define C 0.2			// TODO: set these as params to problem
 #define EPS 0.0001		// 10^-3
-#define N 3 			// number of examples
-#define M 3 			// number of features
+//#define N 3 			// number of examples
+//#define M 3 			// number of features
 namespace MySVM {
 
 class Solver {
@@ -34,22 +34,18 @@ public:
 	// all these arrays need to know the size in order to run w/o seg fault
 	double *y;//[N];
 	double **x;//[N][M]; // training examples (and their associated features)
-	double alpha[N];
-	double w[M];
+	double *alpha; //[N]
+	double *w; //[M]
 	double b;
-	double error[N];
+	double *error; //[N];
+	double length;
+	double features;
 
 	/** \brief 'ExamineExample' Checks if SVM structure satisfies KKT conditions; If for a given index the conditions are not met, calls update() to optimize for current alpha pair
 	 * 	\param index index to check
 	 * 	\return Returns '1' if anything was updated
 	 */
 	int examine(int index);
-
-	//NOTE: MAINTAIN A CACHED ERROR VALUE E = u_i - y_i FOR EVERY NON-BOUND ENTRY IN THE TRAINING SET
-	// Typedef our template for easy of readability and use.
-	//typedef LRUCache<int, double> double_cache_t;
-	//double_cache_t *cache;
-
 	Solver();
 
 };// end Solver
