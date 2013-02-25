@@ -12,8 +12,7 @@
 
 #define C 0.2			// TODO: set these as params to problem
 #define EPS 0.0001		// 10^-3
-//#define N 3 			// number of examples
-//#define M 3 			// number of features
+
 namespace MySVM {
 
 class Solver {
@@ -28,7 +27,7 @@ private:
 	/**	\brief Evaluates the kernel function on two inputs
 	 * 	\return Evaluated dot product
 	 */
-	double kernel(double *, double *);
+	double kernel(double* x[] , int, int);
 
 public:
 	// all these arrays need to know the size in order to run w/o seg fault

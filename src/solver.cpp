@@ -10,15 +10,18 @@ namespace MySVM
 // Solver class constructor
 Solver::Solver()
 {
-	b = 0;
+	// variables initialized in main();
 }
 
-double Solver::kernel(double *x1, double *x2)
+double Solver::kernel(double* x[], int index_i, int index_j)
 {
-	int dotProduct = 0;
-	for (int i = 0; i < features; ++i)
+	double dotProduct = 0;
+
+	for (int i = 0; i < features; i++)
 	{
-		dotProduct += (x1[i] * x2[i]);
+		double val1 = x[index_i][i];
+		double val2 = x[index_j][i];
+		dotProduct += (val1 * val2);
 	}
 
 	return dotProduct;
@@ -30,10 +33,10 @@ int Solver::examine(int index_j)
 	double alph2 = alpha[index_j];
 	double E2 = error[index_j];
 	double r2 = E2 * y2;
-	std::vector<int> nonBoundAlphaIdx;
 
 	int index_i = 0;
 	std::vector<int>::iterator iter;
+	std::vector<int> nonBoundAlphaIdx;
 
 	if (((r2 < -EPS) && (alph2 < C)) || ((r2 > EPS) && (alph2 > 0)))
 	{
@@ -129,14 +132,16 @@ int Solver::update(int index_i, int index_j)
 		return 0;
 	}
 
-	double k11 = kernel(x[index_i], x[index_i]);//<x1,x1>;
-	double k12 = kernel(x[index_i], x[index_j]);//<x1,x2>;
-	double k22 = kernel(x[index_j], x[index_j]);//<x2,x2>;
-	double eta = k11 + k22 - (2 * k12);
+	double k11 = kernel(x, index_i, index_i);//<x1,x1>;
+	double k12 = kernel(x, index_i, index_j);//<x1,x2>;
+	double k22 = kernel(x, index_j, index_j);//<x2,x2>;
+
+	printf("%d %d %d\n",k11,k12,k22);
+	double eta = k11 + k22 - 2*k12;
 
 	if (eta > 0)
 	{
-		alpha2updated = alpha2old + (y2 * (E1 - E2) / eta);
+		alpha2updated = alpha2old + y2 * (E1 - E2) / eta;
 		if (alpha2updated < L)
 		{
 			alpha2updated = L;
@@ -149,6 +154,8 @@ int Solver::update(int index_i, int index_j)
 	}
 	else
 	{
+		std::clog << "!! eta was negative" << std::endl;
+
 		// calculate these objectives
 		double aa2 = L;
 		double aa1 = alpha1old + s * (alpha2old - aa2);
@@ -156,8 +163,8 @@ int Solver::update(int index_i, int index_j)
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
 			Lobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(
-					x[elementIndex], x[index_i])) + ((-y2 * aa2 / 2)
-					* y[elementIndex] * kernel(x[elementIndex], x[index_j]));
+					x, elementIndex, index_i)) + ((-y2 * aa2 / 2)
+					* y[elementIndex] * kernel(x, elementIndex, index_j));
 		}
 
 		aa2 = H;
@@ -166,8 +173,8 @@ int Solver::update(int index_i, int index_j)
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
 			Hobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(
-					x[elementIndex], x[index_i])) + ((-y2 * aa2 / 2)
-					* y[elementIndex] * kernel(x[elementIndex], x[index_j]));
+					x, elementIndex, index_i)) + ((-y2 * aa2 / 2)
+					* y[elementIndex] * kernel(x, elementIndex, index_j));
 		}
 
 		if (Lobj < (Hobj - EPS))
@@ -184,50 +191,65 @@ int Solver::update(int index_i, int index_j)
 		}
 	}
 
-	if (abs(alpha2updated - alpha2old) < EPS
-			* (alpha2updated + alpha2old + EPS))
+	if (abs(alpha2updated - alpha2old) <
+			EPS*(alpha2updated + alpha2old + EPS))
 	{
 		return 0;
 	}
 
+	// update alpha_1
 	alpha1updated = alpha1old + s * (alpha2old - alpha2updated);
+	if (alpha1updated < 0)
+	{
+		alpha1updated = 0;
+	}
+	else if (alpha1updated > C)
+	{
+		alpha1updated = C;
+	}
 
 	// update bias (threshold) to reflect change in alphas
 	// 2.3 Computing the Threshold
-	double b1 = E1 + y1 * ((alpha1updated - alpha1old) * k11) + y2
-			* ((alpha2updated - alpha2old) * k12) + b;
-	double b2 = E2 + y1 * ((alpha1updated - alpha1old) * k12) + y2
-			* ((alpha2updated - alpha2old) * k22) + b;
-	if (((alpha1updated == H) | (alpha1updated == L)) & ((alpha2updated == H)
-			| (alpha2updated == L)))
-	{ // could this be simplified?
-		b = (b1 + b2) / 2;
+	double bold = b;
+	double deltaalpha1 = alpha1updated - alpha1old;
+	double deltaalpha2 = alpha2updated - alpha2old;
+
+	double b1 = E1 + y1*deltaalpha1*k11 + y2*deltaalpha2*k12 + b;
+	double b2 = E2 + y1*deltaalpha1*k12 + y2*deltaalpha2*k22 + b;
+
+	if (!((alpha1updated == H) | (alpha1updated == L)))
+	{
+		b = b1;
+	}
+	else if (!((alpha2updated == H) | (alpha2updated == L)))
+	{
+		b = b2;
 	}
 	else
 	{
-		// alphas not at bounds: b1 should be equal to b2
-		b = b1;
+		b = (b1 + b2) / 2;
 	}
 
 	// update weight vector
 	// 2.4 An Optimization for Linear SVMs
+	//TODO: look at this closer
 	for (int findex = 0; findex < features; findex++)
 	{
-		w[findex] = w[findex] + y1 * (alpha1updated - alpha1old)
-				* x[index_i][findex] + y2 * (alpha2updated - alpha2old)
-				* x[index_j][findex];
+		w[findex] = w[findex] +
+				y1 * deltaalpha1 * x[index_i][findex] +
+				y2 * deltaalpha2 * x[index_j][findex];
 	}
 
 	// update error cache using new lagrange mults
-	//TODO: should this be b_old?
 	for (int i; i < length; i++)
 	{
-		error[i] += y1 * (alpha1updated - alpha1old) * kernel(x[i], x[index_i])
-				+ y2 * (alpha2updated - alpha2old) * kernel(x[i], x[index_j])
-				+ b;
+		error[i] += y1*deltaalpha1*kernel(x, i, index_i)
+				+ y2*deltaalpha2*kernel(x, i, index_j)
+				- b + bold;
 	}
-	error[index_i] = 0.0;
-	error[index_j] = 0.0;
+	//NOTE: maybe unnecessary: set the errors to exactly 0 for the optimized alphas
+	//error[index_i] = 0.0;
+	//error[index_j] = 0.0;
 
 	// update the alpha array with the new values
 	alpha[index_i] = alpha1updated;

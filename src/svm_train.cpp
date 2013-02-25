@@ -7,6 +7,8 @@
 
 static char *line = NULL;
 static int max_line_len;
+
+/** \brief Reads in training data from file (libsvm format) */
 int read_problem(const char *filename);
 static char* readline(FILE *input)
 {
@@ -29,6 +31,7 @@ static char* readline(FILE *input)
 MySVM::Solver solver;
 double* x_space;
 
+/** \brief Initializes member variables of solver */
 void setupSolver(); // initializes alphas, w[], etc for solver class object
 
 /**
@@ -59,7 +62,7 @@ int main(int argc, char **argv)
 
 	setupSolver();
 
-	while ((numChanged > 0) || (examineAll))
+	while ((numChanged > 0) || examineAll)
 	{
 		numChanged = 0;
 
@@ -70,17 +73,17 @@ int main(int argc, char **argv)
 			for (index = 0; index < solver.length; index++)
 			{
 				numChanged += solver.examine(index);
+				//TODO: remove
+				//std::clog << "trainer " << index << "; x, y: " << solver.y[index] <<  " " << solver.x[index][0] << std::endl;
 			}
-
-			// else iterate over multipliers that are not at the bounds
 		}
-		else
+		else // else iterate over multipliers that are not at the bounds
 		{
 			for (index = 0; index < solver.length; index++)
 			{
-				if ((abs(solver.alpha[index]) > EPS) && ((abs(
-						solver.alpha[index] < (C - EPS))) || (abs(
-						solver.alpha[index]) > (C + EPS))))
+				//TODO: could there be negative alpha (take abs())?
+				if ((solver.alpha[index] > EPS) &&
+					((solver.alpha[index] < (C - EPS)) && (solver.alpha[index] > (C + EPS))))
 				{
 					numChanged += solver.examine(index);
 				}
@@ -117,11 +120,14 @@ void setupSolver()
 	solver.error = Malloc(double, solver.length);
 	solver.w = Malloc(double, solver.features);
 
+	solver.b = 0;
+
 	for (int i = 0; i < solver.length; i++)
 	{
-		solver.alpha[i] = 1;
-		solver.error[i] = 10;//-solver.y[i]; // init error to opposite signed y (other side of the separating margin)
+		solver.alpha[i] = 0;
+		solver.error[i] = -solver.y[i]; // init error to opposite signed y (other side of the separating margin)
 	}
+
 	for (int j = 0; j < solver.features; j++)
 	{
 		solver.w[j] = 0;
