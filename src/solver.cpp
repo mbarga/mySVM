@@ -40,48 +40,60 @@ int Solver::examine(int index_j)
 
 	if (((r2 < -EPS) && (alph2 < C)) || ((r2 > EPS) && (alph2 > 0)))
 	{
-		// find number and indices of non-zero and non-C alphas
-		//		for (index_i = 0; index_i < length; index_i++) {
-		//			if (alpha[index_i] < 0) {
-		//				std::clog << "alpha returned was < 0" << std::endl;
-		//			}
-		//			if ( (alpha[index_i] > EPS) &&
-		//				((alpha[index_i] < (C - EPS)) || (alpha[index_i] > (C + EPS)))) {
-		//				// push non-bound alpha index into vector cache
-		//				nonBoundAlphaIdx.push_back(index_i);
-		//			}
-		//		}
+		//find number and indices of non-zero and non-C alphas
+		for (index_i = 0; index_i < length; index_i++)
+		{
+			if (alpha[index_i] < 0)
+			{
+				std::clog << "alpha returned was < 0" << std::endl;
+			}
+			if ((alpha[index_i] > EPS)
+					&& ((alpha[index_i] < (C - EPS))
+							|| (alpha[index_i] > (C + EPS))))
+			{
+				// push non-bound alpha index into vector cache
+				nonBoundAlphaIdx.push_back(index_i);
+			}
+		}
 
-		//		if (nonBoundAlphaIdx.size() > 1) {
-		//			// perform second choice heuristic to choose index_i
-		//			index_i = 0;
-		//			// choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
-		//			double errortemp = 0;
-		//			for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter) {
-		//			    if (abs(error[*iter] - E2) > errortemp) {
-		//			    	index_i = *iter;
-		//			    }
-		//			    errortemp = abs(error[*iter] - E2);
-		//			}
-		//			//TODO: if () the errortemp doesnt stay 0?
-		//			if (update(index_i, index_j)) {
-		//				return 1;
-		//			}
-		//		}
+		if (nonBoundAlphaIdx.size() > 1)
+		{
+			// perform second choice heuristic to choose index_i
+			index_i = 0;
+			// choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
+			double errortemp = 0;
+			for (iter = nonBoundAlphaIdx.begin();
+					iter != nonBoundAlphaIdx.end(); ++iter)
+			{
+				if (abs(error[*iter] - E2) > errortemp)
+				{
+					index_i = *iter;
+				}
+				errortemp = abs(error[*iter] - E2);
+			}
+			//TODO: if () the errortemp doesnt stay 0?
+			if (update(index_i, index_j))
+			{
+				return 1;
+			}
+		}
 
 		// else loop over all non-zero and non-c alpha, starting at a random point
-		//TODO: start at random point
-		//		std::random_shuffle();
-		//		for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter) {
-		//			index_i = *iter;
-		//			if (update(index_i, index_j)) {
-		//				return 1;
-		//			}
-		//		}
+		//TODO: start at random point- is this right?
+		random_shuffle(nonBoundAlphaIdx.begin(), nonBoundAlphaIdx.end());
+		for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end();
+				++iter)
+		{
+			index_i = *iter;
+			if (update(index_i, index_j))
+			{
+				return 1;
+			}
+		}
 
 		// else loop over all possible i1, starting at random point
 		//TODO: start at random point
-		////int updated = 0;
+		//int updated = 0;
 		for (index_i = 0; index_i < length; index_i++)
 		{
 			if (update(index_i, index_j) == 1)
@@ -89,7 +101,7 @@ int Solver::examine(int index_j)
 				return 1;
 			}
 		}
-	}// if error > tolerance
+	} // if error > tolerance
 
 	return 0;
 }
@@ -132,12 +144,10 @@ int Solver::update(int index_i, int index_j)
 		return 0;
 	}
 
-	double k11 = kernel(x, index_i, index_i);//<x1,x1>;
-	double k12 = kernel(x, index_i, index_j);//<x1,x2>;
-	double k22 = kernel(x, index_j, index_j);//<x2,x2>;
-
-	printf("%d %d %d\n",k11,k12,k22);
-	double eta = k11 + k22 - 2*k12;
+	double k11 = kernel(x, index_i, index_i); //<x1,x1>;
+	double k12 = kernel(x, index_i, index_j); //<x1,x2>;
+	double k22 = kernel(x, index_j, index_j); //<x2,x2>;
+	double eta = k11 + k22 - 2 * k12;
 
 	if (eta > 0)
 	{
@@ -154,7 +164,8 @@ int Solver::update(int index_i, int index_j)
 	}
 	else
 	{
-		std::clog << "!! eta was negative" << std::endl;
+		//NOTE: this is a rare case, but SVM should work regardless
+		std::clog << "DEBUG:: eta was negative" << std::endl;
 
 		// calculate these objectives
 		double aa2 = L;
@@ -162,9 +173,10 @@ int Solver::update(int index_i, int index_j)
 		double Lobj = aa1 + aa2; // + (y2 * L * x[]) - b: objective function at a2 = L;
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
-			Lobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(
-					x, elementIndex, index_i)) + ((-y2 * aa2 / 2)
-					* y[elementIndex] * kernel(x, elementIndex, index_j));
+			Lobj += ((-y1 * aa1 / 2) * y[elementIndex]
+					* kernel(x, elementIndex, index_i))
+					+ ((-y2 * aa2 / 2) * y[elementIndex]
+							* kernel(x, elementIndex, index_j));
 		}
 
 		aa2 = H;
@@ -172,9 +184,10 @@ int Solver::update(int index_i, int index_j)
 		double Hobj = aa1 + aa2; // + (y2 * H * x[]) - b: objective function at a2 = H;
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
-			Hobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(
-					x, elementIndex, index_i)) + ((-y2 * aa2 / 2)
-					* y[elementIndex] * kernel(x, elementIndex, index_j));
+			Hobj += ((-y1 * aa1 / 2) * y[elementIndex]
+					* kernel(x, elementIndex, index_i))
+					+ ((-y2 * aa2 / 2) * y[elementIndex]
+							* kernel(x, elementIndex, index_j));
 		}
 
 		if (Lobj < (Hobj - EPS))
@@ -191,9 +204,22 @@ int Solver::update(int index_i, int index_j)
 		}
 	}
 
-	if (abs(alpha2updated - alpha2old) <
-			EPS*(alpha2updated + alpha2old + EPS))
+	//take care of numerical errors
+	//TODO: debug
+	//printf("new %f; old %f\n",alpha2updated,alpha2old);
+	if (alpha2updated < EPS) {
+		alpha2updated = 0;
+	} else if (alpha2updated > (C - EPS)) {
+		alpha2updated = C;
+	}
+
+	double diff = fabs(alpha2updated - alpha2old);
+	double thresh = EPS * (alpha2updated+alpha2old+EPS);
+	//TODO: debug
+	//printf("a1new:%f, a1old:%f | diff:%f ? thresh:%f ",alpha2updated,alpha2old,diff,thresh);
+	if (diff < thresh)
 	{
+		std::cout << "DEBUG:: alpha unchanged" << std::endl;
 		return 0;
 	}
 
@@ -214,8 +240,8 @@ int Solver::update(int index_i, int index_j)
 	double deltaalpha1 = alpha1updated - alpha1old;
 	double deltaalpha2 = alpha2updated - alpha2old;
 
-	double b1 = E1 + y1*deltaalpha1*k11 + y2*deltaalpha2*k12 + b;
-	double b2 = E2 + y1*deltaalpha1*k12 + y2*deltaalpha2*k22 + b;
+	double b1 = E1 + y1 * deltaalpha1 * k11 + y2 * deltaalpha2 * k12 + b;
+	double b2 = E2 + y1 * deltaalpha1 * k12 + y2 * deltaalpha2 * k22 + b;
 
 	if (!((alpha1updated == H) | (alpha1updated == L)))
 	{
@@ -235,21 +261,19 @@ int Solver::update(int index_i, int index_j)
 	//TODO: look at this closer
 	for (int findex = 0; findex < features; findex++)
 	{
-		w[findex] = w[findex] +
-				y1 * deltaalpha1 * x[index_i][findex] +
-				y2 * deltaalpha2 * x[index_j][findex];
+		w[findex] = w[findex] + y1 * deltaalpha1 * x[index_i][findex]
+				+ y2 * deltaalpha2 * x[index_j][findex];
 	}
 
 	// update error cache using new lagrange mults
 	for (int i; i < length; i++)
 	{
-		error[i] += y1*deltaalpha1*kernel(x, i, index_i)
-				+ y2*deltaalpha2*kernel(x, i, index_j)
-				- b + bold;
+		error[i] += y1 * deltaalpha1 * kernel(x, i, index_i)
+				+ y2 * deltaalpha2 * kernel(x, i, index_j) - b + bold;
 	}
 	//NOTE: maybe unnecessary: set the errors to exactly 0 for the optimized alphas
-	//error[index_i] = 0.0;
-	//error[index_j] = 0.0;
+	error[index_i] = 0.0;
+	error[index_j] = 0.0;
 
 	// update the alpha array with the new values
 	alpha[index_i] = alpha1updated;
@@ -259,4 +283,5 @@ int Solver::update(int index_i, int index_j)
 }
 
 }
-;// namespace
+;
+// namespace

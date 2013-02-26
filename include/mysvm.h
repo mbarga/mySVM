@@ -10,6 +10,9 @@
 #include <stdexcept> 	// std::runtime_error
 #include <vector>
 #include <string.h>
+#include <algorithm>
+#include <cmath>
+
 namespace MySVM {
 // NOTE: The file writer implements a C++ idiom, "RAII" for encapsulated resource management
 

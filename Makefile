@@ -1,6 +1,6 @@
 CXX ?= g++ 
 #CXX ?= clang 
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O3 -I./include
  
 all: svm_train
 

@@ -52,7 +52,8 @@ int main(int argc, char **argv)
 
 	// read in data samples from file
 	char input_file_name[1024] =
-			"/home/mbarga/Workbench/git/mySVM/src/test.input";
+			"/home/mbarga/Workbench/gitrepos/mySVM/src/test.input";
+			//"/home/mbarga/Workbench/git/mySVM/src/test.input";
 	int status = read_problem(input_file_name);
 	if (status != 0)
 	{
