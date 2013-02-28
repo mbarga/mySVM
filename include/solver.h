@@ -10,8 +10,8 @@
 #include <time.h>
 #include <cache.h>
 
-#define C 0.2			// TODO: set these as params to problem
-#define EPS 0.0001		// 10^-3
+#define C 2
+#define EPS 0.01
 
 namespace MySVM {
 
@@ -30,13 +30,12 @@ private:
 	double kernel(double* x[] , int, int);
 
 public:
-	// all these arrays need to know the size in order to run w/o seg fault
-	double *y;//[N];
-	double **x;//[N][M]; // training examples (and their associated features)
-	double *alpha; //[N]
-	double *w; //[M]
+	double *y;		//[N];
+	double **x;		//[N][M];
+	double *alpha; 	//[N]
+	double *w; 		//[M]
 	double b;
-	double *error; //[N];
+	double *error; 	//[N];
 	double length;
 	double features;
 

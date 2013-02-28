@@ -19,9 +19,9 @@ double Solver::kernel(double* x[], int index_i, int index_j)
 
 	for (int i = 0; i < features; i++)
 	{
-		double val1 = x[index_i][i];
-		double val2 = x[index_j][i];
-		dotProduct += (val1 * val2);
+		//double val1 = x[index_i][i];
+		//double val2 = x[index_j][i];
+		dotProduct += x[index_i][i] * x[index_j][i];
 	}
 
 	return dotProduct;
@@ -45,49 +45,53 @@ int Solver::examine(int index_j)
 		{
 			if (alpha[index_i] < 0)
 			{
-				std::clog << "alpha returned was < 0" << std::endl;
+				std::clog << "DEBUG:: alpha returned was < 0" << std::endl;
 			}
-			if ((alpha[index_i] > EPS)
-					&& ((alpha[index_i] < (C - EPS))
-							|| (alpha[index_i] > (C + EPS))))
+			if ( (alpha[index_i] > EPS) &&
+				 (alpha[index_i] < (C - EPS)) &&
+				 (alpha[index_i] > (C + EPS)) )
 			{
 				// push non-bound alpha index into vector cache
 				nonBoundAlphaIdx.push_back(index_i);
 			}
 		}
 
+
 		if (nonBoundAlphaIdx.size() > 1)
 		{
 			// perform second choice heuristic to choose index_i
+			// reset index_i
 			index_i = 0;
+
 			// choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
-			double errortemp = 0;
-			for (iter = nonBoundAlphaIdx.begin();
-					iter != nonBoundAlphaIdx.end(); ++iter)
+			double errorDiff = 0;
+			for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter)
 			{
-				if (abs(error[*iter] - E2) > errortemp)
+				if (abs(error[*iter] - E2) > errorDiff)
 				{
 					index_i = *iter;
 				}
-				errortemp = abs(error[*iter] - E2);
+				errorDiff = abs(error[*iter] - E2);
 			}
+
 			//TODO: if () the errortemp doesnt stay 0?
 			if (update(index_i, index_j))
 			{
 				return 1;
 			}
-		}
-
-		// else loop over all non-zero and non-c alpha, starting at a random point
-		//TODO: start at random point- is this right?
-		random_shuffle(nonBoundAlphaIdx.begin(), nonBoundAlphaIdx.end());
-		for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end();
-				++iter)
-		{
-			index_i = *iter;
-			if (update(index_i, index_j))
+			else // if no progress was made, iterate over all non-bound alpha indices
 			{
-				return 1;
+				//loop over all non-zero and non-c alpha, starting at a random point
+				//TODO: start at random point- is this right?
+				random_shuffle(nonBoundAlphaIdx.begin(), nonBoundAlphaIdx.end());
+				for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter)
+				{
+					index_i = *iter;
+					if (update(index_i, index_j))
+					{
+						return 1;
+					}
+				}
 			}
 		}
 
@@ -165,7 +169,7 @@ int Solver::update(int index_i, int index_j)
 	else
 	{
 		//NOTE: this is a rare case, but SVM should work regardless
-		std::clog << "DEBUG:: eta was negative" << std::endl;
+		//std::clog << "DEBUG:: eta was negative" << std::endl;
 
 		// calculate these objectives
 		double aa2 = L;
@@ -219,7 +223,7 @@ int Solver::update(int index_i, int index_j)
 	//printf("a1new:%f, a1old:%f | diff:%f ? thresh:%f ",alpha2updated,alpha2old,diff,thresh);
 	if (diff < thresh)
 	{
-		std::cout << "DEBUG:: alpha unchanged" << std::endl;
+		//std::cout << "DEBUG:: alpha unchanged" << std::endl;
 		return 0;
 	}
 

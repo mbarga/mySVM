@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 
 	// read in data samples from file
 	char input_file_name[1024] =
-			"/home/mbarga/Workbench/gitrepos/mySVM/src/test.input";
-			//"/home/mbarga/Workbench/git/mySVM/src/test.input";
+			//"/home/mbarga/Workbench/gitrepos/mySVM/src/test.input";
+			"/home/mbarga/Workbench/git/mySVM/src/test.input";
 	int status = read_problem(input_file_name);
 	if (status != 0)
 	{
@@ -74,8 +74,6 @@ int main(int argc, char **argv)
 			for (index = 0; index < solver.length; index++)
 			{
 				numChanged += solver.examine(index);
-				//TODO: remove
-				//std::clog << "trainer " << index << "; x, y: " << solver.y[index] <<  " " << solver.x[index][0] << std::endl;
 			}
 		}
 		else // else iterate over multipliers that are not at the bounds
@@ -104,10 +102,13 @@ int main(int argc, char **argv)
 
 	printf("EXITING\n");
 	std::cout << "w values were: " << std::endl;
-	for (int i = 0; i < solver.features; i++)
+	int i;
+	for (i = 0; i < (solver.features-1); i++)
 	{
 		std::cout << solver.w[i] << ", ";
 	}
+	std::cout << solver.w[i] << std::endl;
+
 	//w = alpha * y
 	std::cout << "\nbias was: " << solver.b << std::endl;
 
