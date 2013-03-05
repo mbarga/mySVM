@@ -38,34 +38,35 @@ int Solver::examine(int index_j)
 	std::vector<int>::iterator iter;
 	std::vector<int> nonBoundAlphaIdx;
 
-	if (((r2 < -EPS) && (alph2 < C)) || ((r2 > EPS) && (alph2 > 0)))
+	if ((r2 < -EPS && alph2 < C) || (r2 > EPS && alph2 > 0))
 	{
 		//find number and indices of non-zero and non-C alphas
+		nonBoundAlphaIdx.clear(); // reset index vector
 		for (index_i = 0; index_i < length; index_i++)
 		{
-			if (alpha[index_i] < 0)
-			{
-				std::clog << "DEBUG:: alpha returned was < 0" << std::endl;
-			}
-			if ( (alpha[index_i] > EPS) &&
-				 (alpha[index_i] < (C - EPS)) &&
-				 (alpha[index_i] > (C + EPS)) )
+			//			if (alpha[index_i] < 0)
+			//			{
+			//				std::clog << "DEBUG:: alpha returned was < 0" << std::endl;
+			//			}
+			if (alpha[index_i] > EPS && alpha[index_i] < (C - EPS)
+					&& alpha[index_i] > (C + EPS))
 			{
 				// push non-bound alpha index into vector cache
+				//TODO: remove
+				printf("-------- found non-zero/bound alpha -------------\n");
 				nonBoundAlphaIdx.push_back(index_i);
 			}
 		}
 
-
+		// try to perform second choice heuristic to choose index_i
 		if (nonBoundAlphaIdx.size() > 1)
 		{
-			// perform second choice heuristic to choose index_i
-			// reset index_i
-			index_i = 0;
+			index_i = 0; // reset index_i
 
 			// choose multiplier to maximize the step taken; i.e. max(|E1 - E2|);
 			double errorDiff = 0;
-			for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter)
+			for (iter = nonBoundAlphaIdx.begin(); iter
+					!= nonBoundAlphaIdx.end(); ++iter)
 			{
 				if (abs(error[*iter] - E2) > errorDiff)
 				{
@@ -79,28 +80,33 @@ int Solver::examine(int index_j)
 			{
 				return 1;
 			}
-			else // if no progress was made, iterate over all non-bound alpha indices
+		}
+
+		//loop over all non-zero and non-c alpha, starting at a random point
+		random_shuffle(nonBoundAlphaIdx.begin(), nonBoundAlphaIdx.end());
+		for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter)
+		{
+			index_i = *iter;
+
+			//TODO: remove
+			printf("-------- random nonbound -------------");
+			printf("picked index %d\n", *iter);
+
+			if (update(index_i, index_j))
 			{
-				//loop over all non-zero and non-c alpha, starting at a random point
-				//TODO: start at random point- is this right?
-				random_shuffle(nonBoundAlphaIdx.begin(), nonBoundAlphaIdx.end());
-				for (iter = nonBoundAlphaIdx.begin(); iter != nonBoundAlphaIdx.end(); ++iter)
-				{
-					index_i = *iter;
-					if (update(index_i, index_j))
-					{
-						return 1;
-					}
-				}
+				return 1;
 			}
 		}
 
 		// else loop over all possible i1, starting at random point
-		//TODO: start at random point
-		//int updated = 0;
-		for (index_i = 0; index_i < length; index_i++)
+		randperm(randi, length);
+		for (int i = 0; i < length; i++)
 		{
-			if (update(index_i, index_j) == 1)
+			//TODO: remove
+//			printf("-------- loop over all i-------------");
+//			printf("picked index %d\n", randi[i]);
+
+			if (update(randi[i], index_j) == 1)
 			{
 				return 1;
 			}
@@ -177,10 +183,9 @@ int Solver::update(int index_i, int index_j)
 		double Lobj = aa1 + aa2; // + (y2 * L * x[]) - b: objective function at a2 = L;
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
-			Lobj += ((-y1 * aa1 / 2) * y[elementIndex]
-					* kernel(x, elementIndex, index_i))
-					+ ((-y2 * aa2 / 2) * y[elementIndex]
-							* kernel(x, elementIndex, index_j));
+			Lobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(x,
+					elementIndex, index_i)) + ((-y2 * aa2 / 2)
+					* y[elementIndex] * kernel(x, elementIndex, index_j));
 		}
 
 		aa2 = H;
@@ -188,10 +193,9 @@ int Solver::update(int index_i, int index_j)
 		double Hobj = aa1 + aa2; // + (y2 * H * x[]) - b: objective function at a2 = H;
 		for (int elementIndex = 0; elementIndex < length; elementIndex++)
 		{
-			Hobj += ((-y1 * aa1 / 2) * y[elementIndex]
-					* kernel(x, elementIndex, index_i))
-					+ ((-y2 * aa2 / 2) * y[elementIndex]
-							* kernel(x, elementIndex, index_j));
+			Hobj += ((-y1 * aa1 / 2) * y[elementIndex] * kernel(x,
+					elementIndex, index_i)) + ((-y2 * aa2 / 2)
+					* y[elementIndex] * kernel(x, elementIndex, index_j));
 		}
 
 		if (Lobj < (Hobj - EPS))
@@ -211,14 +215,17 @@ int Solver::update(int index_i, int index_j)
 	//take care of numerical errors
 	//TODO: debug
 	//printf("new %f; old %f\n",alpha2updated,alpha2old);
-	if (alpha2updated < EPS) {
+	if (alpha2updated < EPS)
+	{
 		alpha2updated = 0;
-	} else if (alpha2updated > (C - EPS)) {
+	}
+	else if (alpha2updated > (C - EPS))
+	{
 		alpha2updated = C;
 	}
 
 	double diff = fabs(alpha2updated - alpha2old);
-	double thresh = EPS * (alpha2updated+alpha2old+EPS);
+	double thresh = EPS * (alpha2updated + alpha2old + EPS);
 	//TODO: debug
 	//printf("a1new:%f, a1old:%f | diff:%f ? thresh:%f ",alpha2updated,alpha2old,diff,thresh);
 	if (diff < thresh)
@@ -265,15 +272,15 @@ int Solver::update(int index_i, int index_j)
 	//TODO: look at this closer
 	for (int findex = 0; findex < features; findex++)
 	{
-		w[findex] = w[findex] + y1 * deltaalpha1 * x[index_i][findex]
-				+ y2 * deltaalpha2 * x[index_j][findex];
+		w[findex] = w[findex] + y1 * deltaalpha1 * x[index_i][findex] + y2
+				* deltaalpha2 * x[index_j][findex];
 	}
 
 	// update error cache using new lagrange mults
 	for (int i; i < length; i++)
 	{
-		error[i] += y1 * deltaalpha1 * kernel(x, i, index_i)
-				+ y2 * deltaalpha2 * kernel(x, i, index_j) - b + bold;
+		error[i] += y1 * deltaalpha1 * kernel(x, i, index_i) + y2 * deltaalpha2
+				* kernel(x, i, index_j) - b + bold;
 	}
 	//NOTE: maybe unnecessary: set the errors to exactly 0 for the optimized alphas
 	error[index_i] = 0.0;
@@ -284,6 +291,28 @@ int Solver::update(int index_i, int index_j)
 	alpha[index_j] = alpha2updated;
 
 	return 1;
+}
+
+void Solver::randperm(int* A, int n)
+{
+	int i;
+	int x;
+
+	for (i = 0; i < n; i++)
+	{
+		A[i] = i;
+	}
+
+	for (i = 0; i < n; i++)
+	{
+		int temp;
+
+		/* swap A[i] with a random A[x] */
+		x = lrand48() % n;
+		temp = A[i];
+		A[i] = A[x];
+		A[x] = temp;
+	}
 }
 
 }

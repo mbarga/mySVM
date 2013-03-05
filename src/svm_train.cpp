@@ -41,10 +41,6 @@ void setupSolver(); // initializes alphas, w[], etc for solver class object
 
 int main(int argc, char **argv)
 {
-	int index = 0;
-	int numChanged = 0;
-	bool examineAll = true;
-
 	// instantiate logging
 	std::clog.rdbuf(new Log("mysvm_log", LOG_LOCAL0));
 	std::clog << kLogNotice << "Log initialized..." << std::endl;
@@ -61,7 +57,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	// initialize solver variables
 	setupSolver();
+
+	int index = 0;
+	int numChanged = 0;
+	bool examineAll = true;
 
 	while ((numChanged > 0) || examineAll)
 	{
@@ -81,8 +82,7 @@ int main(int argc, char **argv)
 			for (index = 0; index < solver.length; index++)
 			{
 				//TODO: could there be negative alpha (take abs())?
-				if ((solver.alpha[index] > EPS) &&
-					((solver.alpha[index] < (C - EPS)) && (solver.alpha[index] > (C + EPS))))
+				if ((solver.alpha[index] > EPS) && (solver.alpha[index] < (C - EPS)) && (solver.alpha[index] > (C + EPS)))
 				{
 					numChanged += solver.examine(index);
 				}
@@ -120,6 +120,7 @@ void setupSolver()
 	//TODO: bad style? ********************************
 	solver.alpha = Malloc(double, solver.length);
 	solver.error = Malloc(double, solver.length);
+	solver.randi = Malloc(int, solver.length);
 	solver.w = Malloc(double, solver.features);
 
 	solver.b = 0;
@@ -128,6 +129,7 @@ void setupSolver()
 	{
 		solver.alpha[i] = 0;
 		solver.error[i] = -solver.y[i]; // init error to opposite signed y (other side of the separating margin)
+		solver.randi[i] = i;
 	}
 
 	for (int j = 0; j < solver.features; j++)
