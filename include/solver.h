@@ -24,27 +24,30 @@ private:
 	 */
 	int update(int index_i, int index_j);
 
-	/**	\brief Evaluates the kernel function on two inputs
-	 * 	\return Evaluated dot product
-	 */
-	double kernel(double* x[] , int, int);
-
 public:
 	double *y;		//[N];
 	double **x;		//[N][M];
-	double *alpha; 	//[N]
+	double *alpha; 	//[M]
 	double *w; 		//[M]
 	double b;
 	double *error; 	//[N];
 	double length;
 	double features;
+	int *randi;
 
 	/** \brief 'ExamineExample' Checks if SVM structure satisfies KKT conditions; If for a given index the conditions are not met, calls update() to optimize for current alpha pair
 	 * 	\param index index to check
 	 * 	\return Returns '1' if anything was updated
 	 */
 	int examine(int index);
+
+	/**	\brief Evaluates the kernel function on two inputs
+	 * 	\return Evaluated dot product
+	 */
+	double kernel(double* x[] , int, int);
+
 	Solver();
+	void randperm( int*, int);
 
 };// end Solver
 

@@ -34,6 +34,9 @@ double* x_space;
 /** \brief Initializes member variables of solver */
 void setupSolver(); // initializes alphas, w[], etc for solver class object
 
+/** \brief Simple test of svm on training data */
+void svm_eval();
+
 /**
  *	This is the main entry point for the svm training algorithm. Implements Platt's SMO for C-SVM
  * 
@@ -81,7 +84,6 @@ int main(int argc, char **argv)
 		{
 			for (index = 0; index < solver.length; index++)
 			{
-				//TODO: could there be negative alpha (take abs())?
 				if ((solver.alpha[index] > EPS) && (solver.alpha[index] < (C - EPS)) && (solver.alpha[index] > (C + EPS)))
 				{
 					numChanged += solver.examine(index);
@@ -103,14 +105,15 @@ int main(int argc, char **argv)
 	printf("EXITING\n");
 	std::cout << "w values were: " << std::endl;
 	int i;
-	for (i = 0; i < (solver.features-1); i++)
+	for (i = 0; i < (solver.features); i++)
 	{
-		std::cout << solver.w[i] << ", ";
+		std::cout << i << ": " << solver.w[i] << std::endl;
 	}
-	std::cout << solver.w[i] << std::endl;
 
 	//w = alpha * y
-	std::cout << "\nbias was: " << solver.b << std::endl;
+	std::cout << "bias was: " << solver.b << std::endl;
+
+	svm_eval();
 
 	return 0;
 } // main
@@ -118,6 +121,8 @@ int main(int argc, char **argv)
 void setupSolver()
 {
 	//TODO: bad style? ********************************
+	//TODO: initialize error differently?
+
 	solver.alpha = Malloc(double, solver.length);
 	solver.error = Malloc(double, solver.length);
 	solver.randi = Malloc(int, solver.length);
@@ -127,13 +132,13 @@ void setupSolver()
 
 	for (int i = 0; i < solver.length; i++)
 	{
-		solver.alpha[i] = 0;
 		solver.error[i] = -solver.y[i]; // init error to opposite signed y (other side of the separating margin)
 		solver.randi[i] = i;
 	}
 
 	for (int j = 0; j < solver.features; j++)
 	{
+		solver.alpha[j] = 1;
 		solver.w[j] = 0;
 	}
 	//*************************************************
@@ -236,4 +241,24 @@ int read_problem(const char *filename)
 
 	fclose(fp);
 	return 0;
+}
+
+// simple test evaluation on the training data
+void svm_eval()
+{
+	double sum = 0;
+	for (int i = 0; i < solver.length; i++)
+	{
+		for (int j = 0; j < solver.features; j++)
+		{
+			sum += solver.x[i][j] * solver.w[j];
+
+		}
+
+		sum = (double)solver.y[i] * (sum + solver.b);
+		//sum = (double)solver.y[i] * (sum + solver.b);
+		printf("solver element: %d was = %f\n",i,sum);
+		sum = 0;
+	}
+
 }

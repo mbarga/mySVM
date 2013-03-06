@@ -44,10 +44,11 @@ int Solver::examine(int index_j)
 		nonBoundAlphaIdx.clear(); // reset index vector
 		for (index_i = 0; index_i < length; index_i++)
 		{
-			//			if (alpha[index_i] < 0)
-			//			{
-			//				std::clog << "DEBUG:: alpha returned was < 0" << std::endl;
-			//			}
+			if (alpha[index_i] < 0)
+			{
+				std::clog << "DEBUG:: alpha returned was < 0" << std::endl;
+			}
+
 			if (alpha[index_i] > EPS && alpha[index_i] < (C - EPS)
 					&& alpha[index_i] > (C + EPS))
 			{
@@ -68,11 +69,13 @@ int Solver::examine(int index_j)
 			for (iter = nonBoundAlphaIdx.begin(); iter
 					!= nonBoundAlphaIdx.end(); ++iter)
 			{
-				if (abs(error[*iter] - E2) > errorDiff)
+				if (fabs(error[*iter] - E2) > errorDiff)
 				{
+					//TODO: remove
+					printf("looking at error index %f \n",error[*iter]);
 					index_i = *iter;
+					errorDiff = fabs(error[*iter] - E2);
 				}
-				errorDiff = abs(error[*iter] - E2);
 			}
 
 			//TODO: if () the errortemp doesnt stay 0?
@@ -102,11 +105,8 @@ int Solver::examine(int index_j)
 		randperm(randi, length);
 		for (int i = 0; i < length; i++)
 		{
-			//TODO: remove
-//			printf("-------- loop over all i-------------");
-//			printf("picked index %d\n", randi[i]);
-
-			if (update(randi[i], index_j) == 1)
+			index_i = randi[i];
+			if (update(index_i, index_j) == 1)
 			{
 				return 1;
 			}
@@ -162,6 +162,7 @@ int Solver::update(int index_i, int index_j)
 	if (eta > 0)
 	{
 		alpha2updated = alpha2old + y2 * (E1 - E2) / eta;
+
 		if (alpha2updated < L)
 		{
 			alpha2updated = L;
@@ -175,7 +176,7 @@ int Solver::update(int index_i, int index_j)
 	else
 	{
 		//NOTE: this is a rare case, but SVM should work regardless
-		//std::clog << "DEBUG:: eta was negative" << std::endl;
+		std::clog << "DEBUG:: eta was negative" << std::endl;
 
 		// calculate these objectives
 		double aa2 = L;
@@ -198,11 +199,11 @@ int Solver::update(int index_i, int index_j)
 					* y[elementIndex] * kernel(x, elementIndex, index_j));
 		}
 
-		if (Lobj < (Hobj - EPS))
+		if (EPS < (Hobj - Lobj))
 		{
 			alpha2updated = L;
 		}
-		else if (Lobj > (Hobj + EPS))
+		else if ((Lobj - Hobj) > EPS)
 		{
 			alpha2updated = H;
 		}
@@ -213,8 +214,6 @@ int Solver::update(int index_i, int index_j)
 	}
 
 	//take care of numerical errors
-	//TODO: debug
-	//printf("new %f; old %f\n",alpha2updated,alpha2old);
 	if (alpha2updated < EPS)
 	{
 		alpha2updated = 0;
@@ -226,24 +225,25 @@ int Solver::update(int index_i, int index_j)
 
 	double diff = fabs(alpha2updated - alpha2old);
 	double thresh = EPS * (alpha2updated + alpha2old + EPS);
-	//TODO: debug
+	//TODO: remove
 	//printf("a1new:%f, a1old:%f | diff:%f ? thresh:%f ",alpha2updated,alpha2old,diff,thresh);
 	if (diff < thresh)
 	{
-		//std::cout << "DEBUG:: alpha unchanged" << std::endl;
 		return 0;
 	}
 
 	// update alpha_1
 	alpha1updated = alpha1old + s * (alpha2old - alpha2updated);
-	if (alpha1updated < 0)
+	if (alpha1updated < EPS)
 	{
 		alpha1updated = 0;
 	}
-	else if (alpha1updated > C)
+	else if (alpha1updated > (C-EPS))
 	{
 		alpha1updated = C;
 	}
+
+	//TODO: consider keeping track of alphas at bounds here
 
 	// update bias (threshold) to reflect change in alphas
 	// 2.3 Computing the Threshold
@@ -254,11 +254,11 @@ int Solver::update(int index_i, int index_j)
 	double b1 = E1 + y1 * deltaalpha1 * k11 + y2 * deltaalpha2 * k12 + b;
 	double b2 = E2 + y1 * deltaalpha1 * k12 + y2 * deltaalpha2 * k22 + b;
 
-	if (!((alpha1updated == H) | (alpha1updated == L)))
+	if (!((alpha1updated == H) || (alpha1updated == L)))
 	{
 		b = b1;
 	}
-	else if (!((alpha2updated == H) | (alpha2updated == L)))
+	else if (!((alpha2updated == H) || (alpha2updated == L)))
 	{
 		b = b2;
 	}
@@ -282,9 +282,9 @@ int Solver::update(int index_i, int index_j)
 		error[i] += y1 * deltaalpha1 * kernel(x, i, index_i) + y2 * deltaalpha2
 				* kernel(x, i, index_j) - b + bold;
 	}
-	//NOTE: maybe unnecessary: set the errors to exactly 0 for the optimized alphas
-	error[index_i] = 0.0;
-	error[index_j] = 0.0;
+	//TODO: maybe unnecessary: set the errors to exactly 0 for the optimized alphas
+//	error[index_i] = 0.0;
+//	error[index_j] = 0.0;
 
 	// update the alpha array with the new values
 	alpha[index_i] = alpha1updated;
