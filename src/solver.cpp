@@ -60,6 +60,7 @@ int Solver::examine(int index_j)
 		}
 
 		// try to perform second choice heuristic to choose index_i
+		int result = 0;
 		if (nonBoundAlphaIdx.size() > 1)
 		{
 			index_i = 0; // reset index_i
@@ -79,7 +80,8 @@ int Solver::examine(int index_j)
 			}
 
 			//TODO: if () the errortemp doesnt stay 0?
-			if (update(index_i, index_j))
+			result = update(index_i, index_j);
+			if (result == 1)
 			{
 				return 1;
 			}
@@ -95,7 +97,8 @@ int Solver::examine(int index_j)
 			printf("-------- random nonbound -------------");
 			printf("picked index %d\n", *iter);
 
-			if (update(index_i, index_j))
+			result = update(index_i, index_j);
+			if (result == 1)
 			{
 				return 1;
 			}
@@ -106,7 +109,8 @@ int Solver::examine(int index_j)
 		for (int i = 0; i < length; i++)
 		{
 			index_i = randi[i];
-			if (update(index_i, index_j) == 1)
+			result = update(index_i, index_j);
+			if (result == 1)
 			{
 				return 1;
 			}

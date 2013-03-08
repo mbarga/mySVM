@@ -32,7 +32,7 @@ MySVM::Solver solver;
 double* x_space;
 
 /** \brief Initializes member variables of solver */
-void setupSolver(); // initializes alphas, w[], etc for solver class object
+void initSolver(); // initializes alphas, w[], etc for solver class object
 
 /** \brief Simple test of svm on training data */
 void svm_eval();
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	}
 
 	// initialize solver variables
-	setupSolver();
+	initSolver();
 
 	int index = 0;
 	int numChanged = 0;
@@ -115,13 +115,21 @@ int main(int argc, char **argv)
 
 	svm_eval();
 
+	free(solver.alpha);
+	free(solver.error);
+	free(solver.randi);
+	free(solver.w);
+	free(solver.x);
+	free(solver.y);
+
 	return 0;
 } // main
 
-void setupSolver()
+void initSolver()
 {
 	//TODO: bad style? ********************************
-	//TODO: initialize error differently?
+	//TODO: initialize error|alphas|y differently?
+	//TOOD: deinit - free all memories!! (run memcheck stuff)
 
 	solver.alpha = Malloc(double, solver.length);
 	solver.error = Malloc(double, solver.length);
@@ -133,12 +141,12 @@ void setupSolver()
 	for (int i = 0; i < solver.length; i++)
 	{
 		solver.error[i] = -solver.y[i]; // init error to opposite signed y (other side of the separating margin)
+		solver.alpha[i] = 0;
 		solver.randi[i] = i;
 	}
 
 	for (int j = 0; j < solver.features; j++)
 	{
-		solver.alpha[j] = 1;
 		solver.w[j] = 0;
 	}
 	//*************************************************
@@ -238,6 +246,8 @@ int read_problem(const char *filename)
 			max_index = inst_max_index;
 		//x_space[j++].index = -1;
 	}
+
+	free(x_space);
 
 	fclose(fp);
 	return 0;

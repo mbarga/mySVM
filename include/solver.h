@@ -27,7 +27,7 @@ private:
 public:
 	double *y;		//[N];
 	double **x;		//[N][M];
-	double *alpha; 	//[M]
+	double *alpha; 	//[N]
 	double *w; 		//[M]
 	double b;
 	double *error; 	//[N];
