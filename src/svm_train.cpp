@@ -49,6 +49,9 @@ int main(int argc, char **argv)
 	std::clog << kLogNotice << "Log initialized..." << std::endl;
 	std::clog << "the default is debug level" << std::endl;
 
+	// initialize solver variables
+	initSolver();
+
 	// read in data samples from file
 	char input_file_name[1024] =
 			//"/home/mbarga/Workbench/gitrepos/mySVM/src/test.input";
@@ -59,9 +62,6 @@ int main(int argc, char **argv)
 		std::clog << "failed to properly read in input, aborting" << std::endl;
 		return 1;
 	}
-
-	// initialize solver variables
-	initSolver();
 
 	int index = 0;
 	int numChanged = 0;
@@ -256,19 +256,18 @@ int read_problem(const char *filename)
 // simple test evaluation on the training data
 void svm_eval()
 {
-	double sum = 0;
+	double kernel = 0;
 	for (int i = 0; i < solver.length; i++)
 	{
 		for (int j = 0; j < solver.features; j++)
 		{
-			sum += solver.x[i][j] * solver.w[j];
-
+			kernel += solver.x[i][j] * solver.w[j];
 		}
 
-		sum = (double)solver.y[i] * (sum + solver.b);
+		kernel = (double)solver.y[i] * solver.alpha[i] * kernel - solver.b;
 		//sum = (double)solver.y[i] * (sum + solver.b);
-		printf("solver element: %d was = %f\n",i,sum);
-		sum = 0;
+		printf("solver element: %d was = %f:%f\n",i,(double)solver.y[i],kernel);
+		kernel = 0;
 	}
 
 }
