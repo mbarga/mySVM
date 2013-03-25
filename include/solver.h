@@ -48,6 +48,7 @@ public:
 
 	Solver();
 	void randperm( int*, int);
+	void print();
 
 };// end Solver
 

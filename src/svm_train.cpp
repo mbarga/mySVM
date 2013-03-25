@@ -103,24 +103,17 @@ int main(int argc, char **argv)
 	}
 
 	printf("EXITING\n");
-	std::cout << "w values were: " << std::endl;
-	int i;
-	for (i = 0; i < (solver.features); i++)
-	{
-		std::cout << i << ": " << solver.w[i] << std::endl;
-	}
 
-	//w = alpha * y
-	std::cout << "bias was: " << solver.b << std::endl;
+	solver.print();
 
 	svm_eval();
 
-	free(solver.alpha);
-	free(solver.error);
-	free(solver.randi);
-	free(solver.w);
-	free(solver.x);
-	free(solver.y);
+//	free(solver.alpha);
+//	free(solver.error);
+//	free(solver.randi);
+//	free(solver.w);
+//	free(solver.x);
+//	free(solver.y);
 
 	return 0;
 } // main
