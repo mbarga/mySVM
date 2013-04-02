@@ -6,7 +6,7 @@ all: svm_train
 
 # -g tells it to add support for debugger
 svm_train: 
-	$(CXX) $(CFLAGS) -g ./src/solver.cpp ./src/svm_train.cpp -o model -lm
+	$(CXX) $(CFLAGS) -g ./src/log.cc ./src/solver.cpp ./src/svm_train.cpp -o model -lm
 
 clean:
 	rm -f *~ svm.o model 

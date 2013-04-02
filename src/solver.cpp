@@ -281,7 +281,7 @@ int Solver::update(int index_i, int index_j)
 	}
 
 	// update error cache using new lagrange mults
-	for (int i; i < length; i++)
+	for (int i = 0; i < length; i++)
 	{
 		error[i] += y1 * deltaalpha1 * kernel(x, i, index_i) + y2 * deltaalpha2
 				* kernel(x, i, index_j) - b + bold;
