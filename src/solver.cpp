@@ -319,6 +319,23 @@ void Solver::randperm(int* A, int n)
 	}
 }
 
+void Solver::print()
+{
+	std::cout << "w values were: " << std::endl;
+	for (int i = 0; i < features; i++)
+	{
+		std::cout << i << ": " << w[i] << std::endl;
+	}
+
+	//w = alpha * y
+	std::cout << "bias was: " << b << std::endl;
+
+	for (int i = 0; i < length; i++)
+	{
+		printf("y: %d, error: %d, alpha: %d\n",y[i],error[i],alpha[i]);
+	}
+}
+
 }
 ;
 // namespace

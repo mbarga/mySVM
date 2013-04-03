@@ -103,15 +103,8 @@ int main(int argc, char **argv)
 	}
 
 	printf("EXITING\n");
-	std::cout << "w values were: " << std::endl;
-	int i;
-	for (i = 0; i < (solver.features); i++)
-	{
-		std::cout << i << ": " << solver.w[i] << std::endl;
-	}
 
-	//w = alpha * y
-	std::cout << "bias was: " << solver.b << std::endl;
+	solver.print();
 
 	svm_eval();
 
